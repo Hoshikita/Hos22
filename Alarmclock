@@ -1,0 +1,182 @@
+//------ thêm thư viện ------------
+#include <LiquidCrystal.h>
+LiquidCrystal lcd_1(10, 9, 7, 6, 5, 4);
+//------- định nghĩa chân cổng -----------
+#define bt1 3
+#define bt2 2
+#define buzzer 8
+//---------- khai báo biến toàn cục ---------
+int x = 0,y = 0, bienphu=0,bienphu1=0,bienphu2=0, MODE;
+int h=12, m=12, s=12;
+int sh=12, sm=12, ss=12;
+// ---------- chương trình con -------------
+
+void alarm(){
+  int repeat=0;
+  while(repeat<=5){
+    digitalWrite(8,1);delay(500);
+    digitalWrite(8,0);delay(500);
+    repeat++;s++;
+    displaySec(s,0);
+  }
+}
+
+void pressMode(){
+  //cách 3: bắt thời điểm nhả nút
+   if ( x ==0 ) bienphu=1;  
+   if ( bienphu == 1 && x == 1 )
+   {
+     MODE++;if ( MODE >=4 ) MODE =0;
+     //Serial.println(start);
+     bienphu=0;
+   }
+}
+
+void pressHour(){
+   if ( y ==0 ) bienphu1=1;  
+   if ( bienphu1 == 1 && y == 1 )
+   {
+     sh++; if(sh==24)sh=0;
+     //Serial.println(start);
+     bienphu1=0;
+   }
+}
+
+void pressMin(){
+   if ( y ==0 ) bienphu2=1;  
+   if ( bienphu2 == 1 && y == 1 )
+   {
+     sm++;if(sm==60)sh=0;
+     //Serial.println(start);
+     bienphu2=0;
+   }
+}
+
+void secToMin(){
+  if(s==60){
+      s=0;
+      m++;
+  }
+}
+
+void minToHour(){
+  if(m==60){
+      m=0;
+      h++;
+  }
+}
+
+void repeatHour(){
+  if(h==24){
+    h=0;
+  }
+}
+
+void displaySec(int sec, int row){
+  if(sec<10){
+      lcd_1.setCursor(12, row); 
+      lcd_1.print(0);
+      lcd_1.setCursor(13, row); 
+      lcd_1.print(sec);
+    }
+    else{
+      lcd_1.setCursor(12, row); 
+      lcd_1.print(sec);
+    }
+}
+
+void displayMin(int minute,int row){
+  if(minute<10){
+      lcd_1.setCursor(9, row); 
+      lcd_1.print(0);
+      lcd_1.setCursor(10, row); 
+      lcd_1.print(minute);
+    }
+    else{
+      lcd_1.setCursor(9, row); 
+      lcd_1.print(minute);
+    }
+}
+
+void displayHour(int hour, int row){
+  if(hour<10){
+      lcd_1.setCursor(6, row); 
+      lcd_1.print(0);
+      lcd_1.setCursor(7, row); 
+      lcd_1.print(hour);
+    }
+    else{
+      lcd_1.setCursor(6, row); 
+      lcd_1.print(hour);
+    }
+}
+
+void delaySmall(int n){
+  for(int i=0;i<=n;i++){
+    delay(1);
+    y = digitalRead(2);
+    if(y==0)return;
+    x = digitalRead(3);
+    if(x==0)return;
+  }
+}
+
+//------- chương trình cài đặt khởi tạo --------
+void setup()
+{
+  pinMode(8, OUTPUT);
+  pinMode(3, INPUT_PULLUP);
+  pinMode(2, INPUT_PULLUP);
+  lcd_1.begin(16, 2);
+}
+//------------ chương trình chính ---------
+void loop()
+{ 
+  //B1: thu thập dữ liệu
+   x = digitalRead(3);
+   y = digitalRead(2);  
+  //B2: xử lý
+   // xử lý thời gian thực
+   if(x!=0){
+   s++;
+   delaySmall(883);
+   }
+   // xử lý nút MODE
+   pressMode();
+  //B3: điều khiển ra
+  if (MODE == 0)
+  {
+    secToMin();minToHour();repeatHour();
+    lcd_1.setCursor(0, 0);lcd_1.print("Time: ");
+    displayHour(h,0);lcd_1.print(": ");
+    displayMin(m,0);lcd_1.print(": "); 
+    displaySec(s,0);
+    lcd_1.setCursor(0, 1);lcd_1.print("Set:  ");
+    displayHour(sh,1);lcd_1.print(": ");
+    displayMin(sm,1);lcd_1.print(": "); 
+    displaySec(00,1);
+    if (sh==h && sm==m && s==0){
+    alarm();
+  }
+  }
+  else if (MODE == 1)
+  {
+    lcd_1.setCursor(0, 0);lcd_1.print("Set alarm hour. ");
+    lcd_1.setCursor(0, 1);lcd_1.print("Hour: ");
+    lcd_1.print(sh);lcd_1.print("          ");
+    pressHour();
+    
+  }
+  else if (MODE == 2)
+  {
+    lcd_1.setCursor(0, 0);lcd_1.print("Set alarm min.  ");
+    lcd_1.setCursor(0, 1);lcd_1.print("Min: ");
+    lcd_1.print(sm);lcd_1.print("           ");
+    pressMin();
+  }
+  else if (MODE == 3)
+  {
+    lcd_1.setCursor(0, 0);lcd_1.print("  VU NGOC HUNG  ");
+    lcd_1.setCursor(0, 1);lcd_1.print("    HE161704    ");
+  }
+}
